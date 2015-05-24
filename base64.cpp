@@ -159,6 +159,19 @@ void check_parse(std::string test, std::string expected) {
     BOOST_CHECK_EQUAL( beg, end );
 }
 
+void check_parse_fails(std::string test) {
+    typedef boost::spirit::istream_iterator iter_t;
+    std::istringstream ss(test);
+    ss.unsetf(std::ios::skipws);
+    iter_t beg(ss), end;
+    std::string decoded;
+    using parser::base64;
+    using boost::spirit::x3::ascii::space;
+    // either the parser fails or we don't consume all input
+    BOOST_CHECK( !phrase_parse(beg, end, base64, space, decoded) ||
+                 (beg != end) );
+}
+
 BOOST_TEST_DONT_PRINT_LOG_VALUE(boost::spirit::istream_iterator);
 
 BOOST_AUTO_TEST_CASE( basic ) {
@@ -170,4 +183,10 @@ BOOST_AUTO_TEST_CASE( basic ) {
     check_parse("Zm9vYg==", "foob");
     check_parse("Zm9vYmE=", "fooba");
     check_parse("Zm9vYmFy", "foobar");
+}
+
+BOOST_AUTO_TEST_CASE( reject_invalid ) {
+    
+    check_parse_fails("=");
+    check_parse_fails("==");
 }
