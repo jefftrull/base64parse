@@ -13,6 +13,9 @@
 
 #include <boost/fusion/functional/invocation/invoke.hpp>
 
+#define BOOST_TEST_MODULE base64 parser tests
+#include <boost/test/included/unit_test.hpp>
+
 // Our AST is simple: it's a string.  Sub-parser results will get concatenated.
 
 namespace parser {
@@ -140,7 +143,7 @@ BOOST_SPIRIT_DEFINE(bsfdig, bsfdig_4bit, bsfdig_2bit, base64_3, base64_2, base64
 
 // Per Meredith's suggestion, applying test vectors from RFC4648:
 
-bool check_parse(std::string test, std::string expected) {
+void check_parse(std::string test, std::string expected) {
     typedef boost::spirit::istream_iterator iter_t;
     std::istringstream ss(test);
     ss.unsetf(std::ios::skipws);
@@ -148,30 +151,23 @@ bool check_parse(std::string test, std::string expected) {
     std::string decoded;
     using parser::base64;
     using boost::spirit::x3::ascii::space;
-    if (!phrase_parse(beg, end, base64, space, decoded)) {
-        std::cerr << "parse failed!\n";
-        return false;
-    }
-    if (decoded != expected) {
-        std::cerr << "expected value mismatch\n";
-        return false;
-    }
-    if (beg != end) {
-        std::cerr << "not all input consumed!\n";
-        std::cerr << "remaining: |";
-        std::copy(beg, end, std::ostream_iterator<char>(std::cerr));
-        std::cerr << "|\n";
-        return false;
-    }
-    return true;
+    // parsing passes
+    BOOST_CHECK( phrase_parse(beg, end, base64, space, decoded) );
+    // result is as expected
+    BOOST_CHECK_EQUAL( expected, decoded );
+    // all input consumed
+    BOOST_CHECK_EQUAL( beg, end );
 }
 
-int main() {
-    check_parse("Zm9vYmFy", "foobar");
+BOOST_TEST_DONT_PRINT_LOG_VALUE(boost::spirit::istream_iterator);
+
+BOOST_AUTO_TEST_CASE( basic ) {
+
+    check_parse("", "");
     check_parse("Zg==", "f");
     check_parse("Zm8=", "fo");
     check_parse("Zm9v", "foo");
-
-    check_parse("=", "");
-    return 0;
+    check_parse("Zm9vYg==", "foob");
+    check_parse("Zm9vYmE=", "fooba");
+    check_parse("Zm9vYmFy", "foobar");
 }
