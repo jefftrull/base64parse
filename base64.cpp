@@ -120,7 +120,7 @@ auto decode_fwd =  [](auto&&... args){
 };
 
 // This semantic action is a polymorphic lambda that expands into versions for
-// each of the three context types (one for each rule) it sees:
+// each of the three context types (one for each base64_* rule) it sees:
 auto handle_chars  = 
     [](auto & ctx) {
         using namespace boost;
@@ -128,14 +128,23 @@ auto handle_chars  =
         result += fusion::invoke(decode_fwd, spirit::x3::_attr(ctx));
     } ;
 
-// Just translating Meredith's grammar here:
+// Just translating Meredith's grammar here and adding our semantic actions
+
+// The valid character ranges depend on position within the string, but each produce a 6b quantity:
 auto const bsfdig_def      = (alnum | '+' | '/')[decode_byte()] ;
 auto const bsfdig_4bit_def = char_("AEIMQUYcgkosw048")[decode_byte()] ;
 auto const bsfdig_2bit_def = char_("AQgw")[decode_byte()] ;
+
+// Expressing the valid sequences.  Two, three, or four 6b hextets are forwarded as arguments
+// to decode_bytes_str, which produces a string:
 auto const base64_3_def    = (bsfdig >> bsfdig >> bsfdig >> bsfdig)[handle_chars] ;
 auto const base64_2_def    = (bsfdig >> bsfdig >> bsfdig_4bit >> '=')[handle_chars] ;
 auto const base64_1_def    = (bsfdig >> bsfdig_2bit >> '=' >> '=')[handle_chars] ;
+
+// Finally the strings are concatenated to form the final result.
+// This is the default behavior, so no actions needed:
 auto const base64_def      = *base64_3 >> -(base64_2 | base64_1) ;
+
 // the "document" rule isn't necessary since we will use a Spirit "skip parser"
 // to deal with whitespace
 
