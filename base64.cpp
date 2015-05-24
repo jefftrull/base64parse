@@ -88,9 +88,11 @@ struct decode_byte {
 // decoded by the function above, turning them into a 1-3 byte string
 template<typename ... Hextets>
 std::string decode_bytes_str(Hextets... h) {
+    std::size_t const hextet_count = sizeof...(h) ;
+
     // In C++17 we may be able to do this with a parameter pack "fold"
     // Doing this all at runtime for now by storing the parameters in an array
-    std::array<uint8_t, sizeof...(h)> h_arr = {h...};
+    std::array<uint8_t, hextet_count> h_arr = {h...};
 
     // Store the 6b quantities as a bitstring within a 32b word
     uint32_t bytes = 0;
@@ -99,13 +101,13 @@ std::string decode_bytes_str(Hextets... h) {
         bytes |= v;
     }
 
-    std::size_t const bits = 6*sizeof...(h);
+    std::size_t const bits = 6*hextet_count;
     bytes >>= (bits % 8);   // align (cut off excess bits)
 
     // Pull the bits back out a byte at a time
     std::string result;
-    for (std::size_t i = 0; i < sizeof...(h)-1; ++i) {
-        result += std::string(1, 0xff & (bytes >> (sizeof...(h) - i - 2)*8));
+    for (std::size_t i = 0; i < hextet_count-1; ++i) {
+        result += std::string(1, 0xff & (bytes >> (hextet_count - i - 2)*8));
     }
     return result;
 }
