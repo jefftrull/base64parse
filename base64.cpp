@@ -187,6 +187,21 @@ BOOST_AUTO_TEST_CASE( basic ) {
     check_parse("Zm9vYmFy", "foobar");
 }
 
+BOOST_AUTO_TEST_CASE( whitespace ) {
+
+    check_parse(" Zm9vYg==", "foob");
+    check_parse(" Zm9vYmE=", "fooba");
+    check_parse(" Zm9vYmFy", "foobar");
+
+    check_parse("Zm9vYg== ", "foob");
+    check_parse("Zm9vYmE= ", "fooba");
+    check_parse("Zm9vYmFy ", "foobar");
+
+    check_parse(" Zm9vYg== ", "foob");
+    check_parse(" Zm9vYmE= ", "fooba");
+    check_parse(" Zm9vYmFy ", "foobar");
+}
+
 BOOST_AUTO_TEST_CASE( reject_invalid ) {
     
     check_parse_fails("=");
